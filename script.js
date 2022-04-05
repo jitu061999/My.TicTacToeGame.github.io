@@ -1,67 +1,89 @@
-console.log("Welcome to Tic Tac Toe")
-let music = new Audio("music.mp3")
-let audioTurn = new Audio("ting.mp3")
-let gameover = new Audio("gameover.mp3")
-let turn = "X"
-let isgameover = false;
+const X_CLASS = 'x'
+const CIRCLE_CLASS = 'circle'
+const WINNING_COMBINATIONS = [
+  [0, 1, 2],
+  [3, 4, 5],
+  [6, 7, 8],
+  [0, 3, 6],
+  [1, 4, 7],
+  [2, 5, 8],
+  [0, 4, 8],
+  [2, 4, 6]
+]
+const cellElements = document.querySelectorAll('[data-cell]')
+const board = document.getElementById('board')
+const winningMessageElement = document.getElementById('winningMessage')
+const restartButton = document.getElementById('restartButton')
+const winningMessageTextElement = document.querySelector('[data-winning-message-text]')
+let circleTurn
 
-// Function to change the turn
-const changeTurn = ()=>{
-    return turn === "X"? "0": "X"
+startGame()
+
+restartButton.addEventListener('click', startGame)
+
+function startGame() {
+  circleTurn = false
+  cellElements.forEach(cell => {
+    cell.classList.remove(X_CLASS)
+    cell.classList.remove(CIRCLE_CLASS)
+    cell.removeEventListener('click', handleClick)
+    cell.addEventListener('click', handleClick, { once: true })
+  })
+  setBoardHoverClass()
+  winningMessageElement.classList.remove('show')
 }
 
-// Function to check for a win
-const checkWin = ()=>{
-    let boxtext = document.getElementsByClassName('boxtext');
-    let wins = [
-        [0, 1, 2, 5, 5, 0],
-        [3, 4, 5, 5, 15, 0],
-        [6, 7, 8, 5, 25, 0],
-        [0, 3, 6, -5, 15, 90],
-        [1, 4, 7, 5, 15, 90],
-        [2, 5, 8, 15, 15, 90],
-        [0, 4, 8, 5, 15, 45],
-        [2, 4, 6, 5, 15, 135],
-    ]
-    wins.forEach(e =>{
-        if((boxtext[e[0]].innerText === boxtext[e[1]].innerText) && (boxtext[e[2]].innerText === boxtext[e[1]].innerText) && (boxtext[e[0]].innerText !== "") ){
-            document.querySelector('.info').innerText = boxtext[e[0]].innerText + " Won"
-            isgameover = true
-            document.querySelector('.imgbox').getElementsByTagName('img')[0].style.width = "200px";
-            document.querySelector(".line").style.transform = `translate(${e[3]}vw, ${e[4]}vw) rotate(${e[5]}deg)`
-          document.querySelector(".line").style.width = "20vw";
-        }
-    })
+function handleClick(e) {
+  const cell = e.target
+  const currentClass = circleTurn ? CIRCLE_CLASS : X_CLASS
+  placeMark(cell, currentClass)
+  if (checkWin(currentClass)) {
+    endGame(false)
+  } else if (isDraw()) {
+    endGame(true)
+  } else {
+    swapTurns()
+    setBoardHoverClass()
+  }
 }
 
-// Game Logic
-//music.play();
-let boxes = document.getElementsByClassName("box");
-Array.from(boxes).forEach(element =>{
-    let boxtext = element.querySelector('.boxtext');
-    element.addEventListener('click', ()=>{
-        if(boxtext.innerText === ''){
-            boxtext.innerText = turn;
-            turn = changeTurn();
-            audioTurn.play();
-            checkWin();
-            if (!isgameover){
-                document.getElementsByClassName("info")[0].innerText  = "Turn for " + turn;
-            } 
-        }
+function endGame(draw) {
+  if (draw) {
+    winningMessageTextElement.innerText = 'Draw!'
+  } else {
+    winningMessageTextElement.innerText = `${circleTurn ? "O's" : "X's"} Wins!`
+  }
+  winningMessageElement.classList.add('show')
+}
+
+function isDraw() {
+  return [...cellElements].every(cell => {
+    return cell.classList.contains(X_CLASS) || cell.classList.contains(CIRCLE_CLASS)
+  })
+}
+
+function placeMark(cell, currentClass) {
+  cell.classList.add(currentClass)
+}
+
+function swapTurns() {
+  circleTurn = !circleTurn
+}
+
+function setBoardHoverClass() {
+  board.classList.remove(X_CLASS)
+  board.classList.remove(CIRCLE_CLASS)
+  if (circleTurn) {
+    board.classList.add(CIRCLE_CLASS)
+  } else {
+    board.classList.add(X_CLASS)
+  }
+}
+
+function checkWin(currentClass) {
+  return WINNING_COMBINATIONS.some(combination => {
+    return combination.every(index => {
+      return cellElements[index].classList.contains(currentClass)
     })
-})
-
-// Add onclick listener to reset button
-reset.addEventListener('click', ()=>{
-    let boxtexts = document.querySelectorAll('.boxtext');
-    Array.from(boxtexts).forEach(element => {
-        element.innerText = ""
-    });
-    turn = "X"; 
-    isgameover = false
-    document.querySelector(".line").style.width = "0vw";
-    document.getElementsByClassName("info")[0].innerText  = "Turn for " + turn;
-    document.querySelector('.imgbox').getElementsByTagName('img')[0].style.width = "0px"
-})
-
+  })
+}
